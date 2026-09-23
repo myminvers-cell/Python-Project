@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVault | College Notes & University Exam Material Sharing Portal</title>
+    <meta name="description" content="Access verified university notes, solved previous year question papers (PYQs), formula cheat sheets, and lab manuals from top college scholars.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="/static/css/custom.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-mesh-gradient text-slate-800 dark:text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-nav border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Logo & Brand -->
+            <a href="/" class="flex items-center gap-2.5 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+                    <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">UniVault</span>
+                    <span class="hidden sm:inline-block text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block -mt-1">Academic Portal</span>
+                </div>
+            </a>
+
+            <!-- Quick Links -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                <a href="#materialsSection" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Explore Materials</a>
+                <button class="quick-chip hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-filter-type="material_type" data-filter-value="Previous Year Questions (PYQs)">PYQ Papers</button>
+                <button class="quick-chip hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-filter-type="material_type" data-filter-value="Formula Sheets / Cheat Sheets">Formula Sheets</button>
+                <a href="#leaderboardSection" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Leaderboard</a>
+            </nav>
+
+            <!-- Actions: Study Kit, Theme Toggle, Upload CTA -->
+            <div class="flex items-center gap-2.5">
+                <!-- My Study Kit Button -->
+                <button id="openStudyKitBtn" class="relative p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="My Exam Study Kit">
+                    <i data-lucide="book-marked" class="w-5 h-5"></i>
+                    <span id="studyKitCountBadge" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center shadow-sm">0</span>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button id="themeToggle" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Toggle Theme">
+                    <i id="themeIcon" data-lucide="moon" class="w-5 h-5"></i>
+                </button>
+
+                <!-- Upload CTA -->
+                <button id="openUploadBtn" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-semibold shadow-md shadow-indigo-600/20 active:scale-95 transition-all">
+                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Contribute Notes</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- Hero Section -->
+        <section class="text-center py-6 sm:py-10 max-w-3xl mx-auto space-y-6">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+                <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Semester Exam 2026 Material Repository Active</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
+                Ace Every Semester with <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">Verified Notes & PYQs</span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
+                Search, preview, and download thousands of lecture notes, solved previous year papers, formula cheat sheets, and lab manuals shared by top university scholars.
+            </p>
+
+            <!-- Instant Search Bar -->
+            <div class="relative max-w-2xl mx-auto">
+                <div class="relative flex items-center">
+                    <i data-lucide="search" class="absolute left-4 w-5 h-5 text-slate-400"></i>
+                    <input type="text" id="searchInput"
+                           placeholder="Search by subject (e.g. Operating Systems), code (CS-302), university, or topic..."
+                           class="w-full pl-12 pr-12 py-3.5 rounded-2xl glass-panel text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base shadow-lg shadow-indigo-500/5 transition-all">
+                    <button id="clearSearchBtn" class="hidden absolute right-4 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Clear">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Trending Filter Chips -->
+            <div class="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs">
+                <span class="text-slate-400 dark:text-slate-500 font-medium">Trending:</span>
+                <button class="quick-chip px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-filter-type="search" data-filter-value="Data Structures">Data Structures</button>
+                <button class="quick-chip px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-filter-type="search" data-filter-value="Operating Systems">Operating Systems</button>
+                <button class="quick-chip px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-filter-type="search" data-filter-value="DBMS">DBMS</button>
+                <button class="quick-chip px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-filter-type="material_type" data-filter-value="Previous Year Questions (PYQs)">Solved PYQs</button>
+                <button class="quick-chip px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-filter-type="material_type" data-filter-value="Formula Sheets / Cheat Sheets">Formula Sheets</button>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4 max-w-3xl mx-auto">
+                <div class="glass-panel p-4 rounded-2xl text-center">
+                    <span class="block text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{{ stats.total_materials }}+</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Verified Materials</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl text-center">
+                    <span class="block text-2xl sm:text-3xl font-extrabold text-purple-600 dark:text-purple-400">{{ (stats.total_downloads / 1000)|round(1) }}k+</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Student Downloads</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl text-center">
+                    <span class="block text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{{ stats.total_universities }}</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Universities Covered</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl text-center">
+                    <span class="block text-2xl sm:text-3xl font-extrabold text-pink-600 dark:text-pink-400">{{ stats.total_upvotes }}</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Community Upvotes</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Materials Section -->
+        <section id="materialsSection" class="space-y-6">
+
+            <!-- Filter Toolbar -->
+            <div class="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+                <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                    
+                    <!-- Dropdowns Row -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+                        
+                        <!-- University Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">University</label>
+                            <select id="universityFilter" class="w-full text-xs font-medium py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="all">All Universities</option>
+                                {% for uni in filters.universities %}
+                                <option value="{{ uni }}">{{ uni }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Branch Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Department / Branch</label>
+                            <select id="branchFilter" class="w-full text-xs font-medium py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="all">All Branches</option>
+                                {% for br in filters.branches %}
+                                <option value="{{ br }}">{{ br }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Semester Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Semester</label>
+                            <select id="semesterFilter" class="w-full text-xs font-medium py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="all">All Semesters</option>
+                                {% for sem in filters.semesters %}
+                                <option value="{{ sem }}">{{ sem }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Material Type Filter -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Material Type</label>
+                            <select id="materialTypeFilter" class="w-full text-xs font-medium py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="all">All Types</option>
+                                {% for mtype in filters.material_types %}
+                                <option value="{{ mtype }}">{{ mtype }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sort By Option -->
+                    <div class="flex items-center gap-2 pt-2 lg:pt-0 self-end lg:self-center">
+                        <span class="text-xs text-slate-400 font-semibold whitespace-nowrap">Sort by:</span>
+                        <select id="sortByFilter" class="text-xs font-semibold py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="popular">Most Popular</option>
+                            <option value="downloads">Most Downloaded</option>
+                            <option value="rating">Highest Rated</option>
+                            <option value="newest">Newest Uploads</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Material Items Counter -->
+            <div class="flex items-center justify-between px-1">
+                <span id="materialsCount" class="text-xs font-bold uppercase tracking-wider text-slate-400">Loading resources...</span>
+                <button id="heroUploadBtn" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                    Upload Your Notes
+                </button>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div id="loadingSkeleton" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {% for i in range(6) %}
+                <div class="glass-panel rounded-2xl p-5 space-y-4 animate-pulse">
+                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                    <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                    <div class="h-16 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                    <div class="h-8 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Materials Grid -->
+            <div id="materialsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Dynamically populated by static/js/app.js -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-16 px-4 glass-panel rounded-2xl max-w-lg mx-auto space-y-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                    <i data-lucide="file-question" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">No Study Materials Found</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Try broadening your search query or selecting "All" from the university and branch filter dropdowns.
+                </p>
+                <button onclick="document.getElementById('clearSearchBtn').click();" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors">
+                    Reset Filters
+                </button>
+            </div>
+
+            <!-- Pagination Container -->
+            <div id="paginationContainer" class="hidden flex items-center justify-center gap-3 pt-6">
+                <button id="prevPageBtn" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    Previous
+                </button>
+                <span id="pageInfo" class="text-xs font-bold text-slate-500 dark:text-slate-400">Page 1 of 1</span>
+                <button id="nextPageBtn" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    Next
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Community Leaderboard Section -->
+        <section id="leaderboardSection" class="pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">🏆 Contributor Hall of Fame</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Top university scholars helping students prepare and ace exams across the globe.</p>
+                </div>
+                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-full border border-indigo-200/40 w-fit">
+                    Updated Weekly
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for user in leaderboard %}
+                <div class="glass-panel p-4 rounded-2xl flex items-center gap-3.5 card-hover-glow">
+                    <img src="{{ user.avatar }}" alt="{{ user.name }}" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-500/30 flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1">
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white truncate">{{ user.name }}</h4>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300/40">{{ user.badge }}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ user.university }}</p>
+                        <div class="flex items-center gap-3 mt-1.5 text-xs text-slate-600 dark:text-slate-300">
+                            <span class="flex items-center gap-1 font-semibold text-indigo-600 dark:text-indigo-400">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                                {{ user.uploads_count }} uploads
+                            </span>
+                            <span>•</span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500 fill-rose-500"></i>
+                                {{ user.upvotes_count }} upvotes
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200/80 dark:border-slate-800/80 py-8 bg-white/40 dark:bg-slate-900/40 mt-16 text-center text-xs text-slate-500 dark:text-slate-400">
+        <div class="max-w-7xl mx-auto px-4 space-y-3">
+            <div class="flex items-center justify-center gap-2 font-bold text-slate-700 dark:text-slate-200">
+                <i data-lucide="graduation-cap" class="w-4 h-4 text-indigo-500"></i>
+                <span>UniVault Academic Sharing Portal</span>
+            </div>
+            <p>Designed for college students, university faculties, and competitive exam preparation. Free, open, and peer-reviewed.</p>
+            <div class="flex justify-center gap-4 text-slate-400 pt-2">
+                <span>Next-Gen Study Resources</span>
+                <span>•</span>
+                <span>Instant PYQ Solutions</span>
+                <span>•</span>
+                <span>Ready for Vercel Deployment</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================================= -->
+    <!-- Document Preview & Reviews Modal                              -->
+    <!-- ============================================================= -->
+    <div id="previewModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+        <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-4 bg-slate-50/70 dark:bg-slate-800/40">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span id="previewBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
+                            Lecture Notes
+                        </span>
+                        <span id="previewCode" class="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-bold">CS-201</span>
+                        <span id="previewSemester" class="text-xs text-slate-500 dark:text-slate-400">Semester 3</span>
+                    </div>
+                    <h2 id="previewTitle" class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                        Material Title
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        <span id="previewUniversity" class="font-semibold text-indigo-600 dark:text-indigo-400">Stanford University</span>
+                        <span>•</span>
+                        <span id="previewBranch">Computer Science</span>
+                        <span>•</span>
+                        <span id="previewAuthor">Shared by Alex Chen</span>
+                    </div>
+                </div>
+
+                <button id="closePreviewBtn" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Close">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1">
+                
+                <!-- Metadata Stats Pills -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">
+                        <span class="block text-[11px] text-slate-400 uppercase font-semibold">Pages</span>
+                        <span id="previewPages" class="text-sm font-bold text-slate-800 dark:text-slate-200">84 Pages</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">
+                        <span class="block text-[11px] text-slate-400 uppercase font-semibold">Format & Size</span>
+                        <span id="previewSize" class="text-sm font-bold text-slate-800 dark:text-slate-200">3.4 MB (PDF)</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">
+                        <span class="block text-[11px] text-slate-400 uppercase font-semibold">Downloads</span>
+                        <span id="previewDownloads" class="text-sm font-bold text-slate-800 dark:text-slate-200">1.4k downloads</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">
+                        <span class="block text-[11px] text-slate-400 uppercase font-semibold">Avg Rating</span>
+                        <span id="previewRating" class="text-sm font-bold text-amber-500">5.0 (12 reviews)</span>
+                    </div>
+                </div>
+
+                <!-- Description & Tags -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Overview</h4>
+                    <p id="previewDescription" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"></p>
+                    <div id="previewTags" class="flex flex-wrap gap-1.5 mt-3"></div>
+                </div>
+
+                <!-- In-App Interactive Document Reader Preview -->
+                <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-slate-900 text-slate-100">
+                    <div class="p-3 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between text-xs">
+                        <span class="flex items-center gap-1.5 font-semibold text-slate-300">
+                            <i data-lucide="file-text" class="w-4 h-4 text-indigo-400"></i>
+                            Verified Study Content & Core Units
+                        </span>
+                        <span class="text-slate-400 font-mono text-[11px]">Instant Document Preview</span>
+                    </div>
+                    <div class="p-4 sm:p-5 max-h-72 overflow-y-auto font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed select-text" id="previewContent">
+                        <!-- Preview content populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Community Reviews Section -->
+                <div class="border-t border-slate-200 dark:border-slate-800 pt-6 space-y-4">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i data-lucide="message-square" class="w-4 h-4 text-indigo-500"></i>
+                        Student Reviews & Feedback
+                    </h3>
+
+                    <!-- Review Submission Form -->
+                    <form id="reviewForm" class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Rate this study material:</span>
+                            <div class="flex items-center gap-1" id="starRatingSelector">
+                                {% for i in range(1, 6) %}
+                                <button type="button" class="star-btn p-1 rounded hover:scale-110 transition-transform" data-star="{{ i }}">
+                                    <i data-lucide="star" class="w-5 h-5 fill-amber-400 text-amber-400"></i>
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input type="text" id="reviewAuthorInput" placeholder="Your Name / Handle"
+                                   class="text-xs py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <input type="text" id="reviewCommentInput" placeholder="How did this help in your exam prep?" required
+                                   class="sm:col-span-2 text-xs py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <button type="submit" class="w-full sm:w-auto px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors">
+                            Submit Review
+                        </button>
+                    </form>
+
+                    <!-- Reviews List -->
+                    <div id="reviewsList" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer Action Buttons -->
+            <div class="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex flex-wrap items-center justify-between gap-3">
+                <button id="previewBookmarkBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors">
+                    <i data-lucide="bookmark" class="w-4 h-4"></i>
+                    <span>Save to Study Kit</span>
+                </button>
+
+                <button id="previewDownloadBtn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-indigo-600/25 active:scale-95 transition-all">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Download Full Material</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- Upload Notes / Exam Material Modal                            -->
+    <!-- ============================================================= -->
+    <div id="uploadModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+        <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]">
+            
+            <!-- Upload Modal Header -->
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                        <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Contribute Notes & Exam Material</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Help fellow students by publishing quality study resources.</p>
+                    </div>
+                </div>
+
+                <button id="closeUploadBtn" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Upload Form -->
+            <form id="uploadForm" class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
+                
+                <!-- Material Title -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Material Title *</label>
+                    <input type="text" name="title" required placeholder="e.g. Complete Operating Systems End-Sem Master Notes"
+                           class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Subject & Code -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Subject Name *</label>
+                        <input type="text" name="subject_name" required placeholder="e.g. Operating Systems"
+                               class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Subject Code</label>
+                        <input type="text" name="subject_code" placeholder="e.g. CS-302"
+                               class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono uppercase">
+                    </div>
+                </div>
+
+                <!-- University & Branch -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">University / College</label>
+                        <input type="text" name="university" placeholder="e.g. Stanford University or MIT"
+                               class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Branch / Department</label>
+                        <select name="branch" class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                            <option value="Electronics & Communication">Electronics & Communication</option>
+                            <option value="Mechanical Engineering">Mechanical Engineering</option>
+                            <option value="Civil Engineering">Civil Engineering</option>
+                            <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
+                            <option value="Applied Sciences & Mathematics">Applied Sciences & Mathematics</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Semester & Material Type -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Semester</label>
+                        <select name="semester" class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            {% for i in range(1, 9) %}
+                            <option value="Semester {{ i }}">Semester {{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Material Type</label>
+                        <select name="material_type" class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Lecture Notes">Lecture Notes</option>
+                            <option value="Previous Year Questions (PYQs)">Previous Year Questions (PYQs)</option>
+                            <option value="Formula Sheets / Cheat Sheets">Formula Sheets / Cheat Sheets</option>
+                            <option value="Lab Manuals">Lab Manuals</option>
+                            <option value="Solved Papers">Solved Papers</option>
+                            <option value="Syllabus">Syllabus</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- File Drag & Drop Zone -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Upload File or Provide Cloud URL</label>
+                    <div id="fileDropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors bg-slate-50/50 dark:bg-slate-800/30">
+                        <i data-lucide="cloud-upload" class="w-8 h-8 text-indigo-500 mx-auto mb-2"></i>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Click to browse or drag and drop file</span>
+                        <span class="text-[11px] text-slate-400">PDF, DOCX, PPTX, TXT up to 32MB</span>
+                        <p id="selectedFileName" class="hidden mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"></p>
+                        <input type="file" id="fileInput" name="file" class="hidden" accept=".pdf,.docx,.pptx,.txt,.zip">
+                    </div>
+                </div>
+
+                <!-- External Cloud Link Option -->
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Or direct file link (Google Drive / OneDrive / GitHub / Dropbox):</label>
+                    <input type="url" name="file_url" placeholder="https://drive.google.com/..."
+                           class="w-full text-xs py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Uploader Handle & Tags -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Your Name / Contributor Handle</label>
+                        <input type="text" name="uploader_name" placeholder="e.g. Alex Chen"
+                               class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Tags (comma separated)</label>
+                        <input type="text" name="tags" placeholder="e.g. OS, Paging, Deadlock, PYQ"
+                               class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Description / Preview snippet -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Brief Summary / Key Topics Covered</label>
+                    <textarea name="description" rows="3" placeholder="Highlight key modules, units, solved numericals, or exam tips included in this file..."
+                              class="w-full text-xs sm:text-sm py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+                    <button type="button" onclick="document.getElementById('closeUploadBtn').click();" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
+                        Cancel
+                    </button>
+                    <button type="submit" id="uploadSubmitBtn" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-indigo-600/25 active:scale-95 transition-all">
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                        <span>Publish Material</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- "My Exam Study Kit" Slide-Over Drawer                         -->
+    <!-- ============================================================= -->
+    <div id="studyKitDrawer" class="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
+            <div class="flex items-center gap-2">
+                <i data-lucide="book-marked" class="w-5 h-5 text-amber-500"></i>
+                <h3 class="font-bold text-base text-slate-900 dark:text-white">My Exam Study Kit</h3>
+            </div>
+            <button id="closeStudyKitBtn" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Drawer Content -->
+        <div class="p-4 flex-1 overflow-y-auto space-y-3">
+            <div id="studyKitEmpty" class="text-center py-16 px-4 space-y-3">
+                <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                    <i data-lucide="bookmark" class="w-6 h-6"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">Your Study Kit is empty</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Click the bookmark icon on any material card to build your personalized exam revision kit.
+                </p>
+            </div>
+
+            <div id="studyKitItems" class="space-y-2.5">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
+            <button id="clearStudyKitBtn" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">
+                Clear All
+            </button>
+            <button onclick="document.getElementById('closeStudyKitBtn').click();" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">
+                Close Kit
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 flex flex-col items-end pointer-events-none"></div>
+
+    <!-- Client-side App Script -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Initialize Lucide Icons on load
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

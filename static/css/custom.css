@@ -1,0 +1,187 @@
+/* ==========================================================================
+   UniVault: Custom Theme, Glassmorphism, and Animation Styles
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+}
+
+/* Glassmorphism Accents */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-panel {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+.glass-nav {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-nav {
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Gradient Background Mesh */
+.bg-mesh-gradient {
+    background-color: #f8fafc;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.08) 0px, transparent 50%);
+}
+
+.dark .bg-mesh-gradient {
+    background-color: #0b0f19;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.22) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.22) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.15) 0px, transparent 50%);
+}
+
+/* Card Hover Glow */
+.card-hover-glow {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover-glow:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px -8px rgba(99, 102, 241, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+}
+
+.dark .card-hover-glow:hover {
+    box-shadow: 0 16px 32px -8px rgba(99, 102, 241, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Category Badge Color Mapping */
+.badge-lecture-notes {
+    background-color: #e0e7ff;
+    color: #4338ca;
+}
+.dark .badge-lecture-notes {
+    background-color: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+.badge-pyqs {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+.dark .badge-pyqs {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.badge-formula-sheets {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+.dark .badge-formula-sheets {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+}
+
+.badge-lab-manuals {
+    background-color: #d1fae5;
+    color: #047857;
+}
+.dark .badge-lab-manuals {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.badge-solved-papers {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+}
+.dark .badge-solved-papers {
+    background-color: rgba(168, 85, 247, 0.2);
+    color: #d8b4fe;
+}
+
+.badge-syllabus {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+.dark .badge-syllabus {
+    background-color: rgba(14, 165, 233, 0.2);
+    color: #7dd3fc;
+}
+
+/* Heart pop animation */
+@keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+.animate-heart-pop {
+    animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Code Preview Block */
+pre code {
+    font-family: var(--font-mono);
+}
+
+/* Toast animations */
+@keyframes slideInUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.toast-enter {
+    animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

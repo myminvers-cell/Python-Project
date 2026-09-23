@@ -1,0 +1,443 @@
+"""
+Database layer for UniVault: College Notes and Exam Material Sharing Portal.
+Provides automatic schema migration, Vercel /tmp environment fallback,
+data seeding, and safe transactional querying.
+"""
+
+import os
+import sqlite3
+import tempfile
+from datetime import datetime
+from seed_data import SAMPLE_MATERIALS, SAMPLE_REVIEWS, SAMPLE_CONTRIBUTORS
+
+
+def get_db_path():
+    """
+    Returns the appropriate SQLite database file path.
+    On Vercel Serverless (Linux), `/tmp` is the writable ephemeral storage.
+    On other environments, uses standard temp or local `./data/univault.db`.
+    """
+    if os.environ.get("VERCEL"):
+        tmp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
+        return os.path.join(tmp_dir, "univault.db")
+    
+    # Check if custom path configured via environment
+    custom_path = os.environ.get("DATABASE_PATH")
+    if custom_path:
+        return custom_path
+        
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+        return os.path.join(data_dir, "univault.db")
+    except Exception:
+        return os.path.join(tempfile.gettempdir(), "univault.db")
+
+
+def get_connection():
+    """Create and return a database connection with row factory enabled."""
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path, timeout=15)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def init_db():
+    """Initializes tables and seeds sample data if database is empty."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Create materials table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS materials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        subject_name TEXT NOT NULL,
+        subject_code TEXT,
+        branch TEXT NOT NULL,
+        semester TEXT NOT NULL,
+        university TEXT NOT NULL,
+        material_type TEXT NOT NULL,
+        academic_year TEXT DEFAULT '2024',
+        file_url TEXT NOT NULL,
+        file_type TEXT DEFAULT 'PDF',
+        file_size_kb INTEGER DEFAULT 2048,
+        page_count INTEGER DEFAULT 20,
+        uploader_name TEXT NOT NULL,
+        uploader_avatar TEXT,
+        downloads_count INTEGER DEFAULT 0,
+        views_count INTEGER DEFAULT 0,
+        upvotes_count INTEGER DEFAULT 0,
+        tags TEXT DEFAULT '',
+        is_featured INTEGER DEFAULT 0,
+        preview_content TEXT DEFAULT '',
+        status TEXT DEFAULT 'approved',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # Create reviews table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        material_id INTEGER NOT NULL,
+        author_name TEXT NOT NULL,
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (material_id) REFERENCES materials (id) ON DELETE CASCADE
+    );
+    """)
+
+    # Create contributors table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS contributors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        avatar TEXT,
+        university TEXT,
+        uploads_count INTEGER DEFAULT 0,
+        upvotes_count INTEGER DEFAULT 0,
+        badge TEXT DEFAULT 'Contributor',
+        reputation INTEGER DEFAULT 0
+    );
+    """)
+
+    # Check if materials exist, if not seed initial data
+    cursor.execute("SELECT COUNT(*) AS count FROM materials")
+    row = cursor.fetchone()
+    if row and row["count"] == 0:
+        # Seed materials
+        for item in SAMPLE_MATERIALS:
+            cursor.execute("""
+            INSERT INTO materials (
+                title, description, subject_name, subject_code, branch,
+                semester, university, material_type, academic_year, file_url,
+                file_type, file_size_kb, page_count, uploader_name, uploader_avatar,
+                downloads_count, views_count, upvotes_count, tags, is_featured,
+                preview_content, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')
+            """, (
+                item["title"], item.get("description", ""), item["subject_name"],
+                item.get("subject_code", ""), item["branch"], item["semester"],
+                item["university"], item["material_type"], item.get("academic_year", "2024"),
+                item["file_url"], item.get("file_type", "PDF"), item.get("file_size_kb", 2048),
+                item.get("page_count", 25), item.get("uploader_name", "Student Scholar"),
+                item.get("uploader_avatar", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"),
+                item.get("downloads_count", 0), item.get("views_count", 0),
+                item.get("upvotes_count", 0), item.get("tags", ""), item.get("is_featured", 0),
+                item.get("preview_content", "")
+            ))
+
+        # Seed reviews
+        for rev in SAMPLE_REVIEWS:
+            cursor.execute("""
+            INSERT INTO reviews (material_id, author_name, rating, comment)
+            VALUES (?, ?, ?, ?)
+            """, (rev["material_id"], rev["author_name"], rev["rating"], rev["comment"]))
+
+        # Seed contributors
+        for c in SAMPLE_CONTRIBUTORS:
+            cursor.execute("""
+            INSERT INTO contributors (name, avatar, university, uploads_count, upvotes_count, badge, reputation)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (c["name"], c["avatar"], c["university"], c["uploads_count"], c["upvotes_count"], c["badge"], c["reputation"]))
+
+    conn.commit()
+    conn.close()
+
+
+def get_materials(search="", branch="all", semester="all", university="all", material_type="all", sort_by="popular", page=1, per_page=12):
+    """Query materials with multi-facet filters, instant search, and sorting."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+    SELECT m.*, 
+           COALESCE(AVG(r.rating), 5.0) AS avg_rating,
+           COUNT(r.id) AS review_count
+    FROM materials m
+    LEFT JOIN reviews r ON m.id = r.material_id
+    WHERE m.status = 'approved'
+    """
+    params = []
+
+    if search and search.strip():
+        search_term = f"%{search.strip()}%"
+        query += """ AND (
+            m.title LIKE ? OR 
+            m.subject_name LIKE ? OR 
+            m.subject_code LIKE ? OR 
+            m.description LIKE ? OR 
+            m.university LIKE ? OR 
+            m.uploader_name LIKE ? OR 
+            m.tags LIKE ?
+        )"""
+        params.extend([search_term] * 7)
+
+    if branch and branch.lower() != "all":
+        query += " AND LOWER(m.branch) = LOWER(?)"
+        params.append(branch)
+
+    if semester and semester.lower() != "all":
+        query += " AND LOWER(m.semester) = LOWER(?)"
+        params.append(semester)
+
+    if university and university.lower() != "all":
+        query += " AND LOWER(m.university) = LOWER(?)"
+        params.append(university)
+
+    if material_type and material_type.lower() != "all":
+        query += " AND LOWER(m.material_type) = LOWER(?)"
+        params.append(material_type)
+
+    query += " GROUP BY m.id"
+
+    # Sorting
+    if sort_by == "downloads":
+        query += " ORDER BY m.downloads_count DESC, m.id DESC"
+    elif sort_by == "rating":
+        query += " ORDER BY avg_rating DESC, m.upvotes_count DESC"
+    elif sort_by == "newest":
+        query += " ORDER BY m.id DESC"
+    else:  # popular / featured
+        query += " ORDER BY m.is_featured DESC, m.upvotes_count DESC, m.downloads_count DESC"
+
+    # Total matching count
+    count_cursor = conn.cursor()
+    # Simple count query without limit
+    items_raw = cursor.execute(query, params).fetchall()
+    total_count = len(items_raw)
+
+    # Apply pagination
+    offset = (page - 1) * per_page
+    paged_items = items_raw[offset:offset + per_page]
+
+    results = []
+    for row in paged_items:
+        d = dict(row)
+        d["avg_rating"] = round(d["avg_rating"], 1) if d["avg_rating"] is not None else 5.0
+        results.append(d)
+
+    conn.close()
+    return {
+        "materials": results,
+        "total": total_count,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total_count + per_page - 1) // per_page if total_count > 0 else 1
+    }
+
+
+def get_material_by_id(material_id):
+    """Retrieve full detail for a single material item including reviews."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT m.*, 
+           COALESCE(AVG(r.rating), 5.0) AS avg_rating,
+           COUNT(r.id) AS review_count
+    FROM materials m
+    LEFT JOIN reviews r ON m.id = r.material_id
+    WHERE m.id = ?
+    GROUP BY m.id
+    """, (material_id,))
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        return None
+
+    item = dict(row)
+    item["avg_rating"] = round(item["avg_rating"], 1) if item["avg_rating"] is not None else 5.0
+
+    # Fetch reviews
+    cursor.execute("""
+    SELECT id, author_name, rating, comment, created_at 
+    FROM reviews 
+    WHERE material_id = ? 
+    ORDER BY id DESC
+    """, (material_id,))
+    item["reviews"] = [dict(r) for r in cursor.fetchall()]
+
+    conn.close()
+    return item
+
+
+def increment_views(material_id):
+    """Increment the view counter for an item."""
+    conn = get_connection()
+    conn.execute("UPDATE materials SET views_count = views_count + 1 WHERE id = ?", (material_id,))
+    conn.commit()
+    conn.close()
+
+
+def increment_upvote(material_id):
+    """Increment upvote counter and return updated count."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE materials SET upvotes_count = upvotes_count + 1 WHERE id = ?", (material_id,))
+    conn.commit()
+
+    cursor.execute("SELECT upvotes_count FROM materials WHERE id = ?", (material_id,))
+    row = cursor.fetchone()
+    count = row["upvotes_count"] if row else 0
+    conn.close()
+    return count
+
+
+def increment_download(material_id):
+    """Increment download counter and return updated count."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE materials SET downloads_count = downloads_count + 1 WHERE id = ?", (material_id,))
+    conn.commit()
+
+    cursor.execute("SELECT downloads_count, file_url FROM materials WHERE id = ?", (material_id,))
+    row = cursor.fetchone()
+    result = dict(row) if row else {"downloads_count": 0, "file_url": ""}
+    conn.close()
+    return result
+
+
+def create_material(data):
+    """Insert a new user-contributed academic material."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    INSERT INTO materials (
+        title, description, subject_name, subject_code, branch,
+        semester, university, material_type, academic_year, file_url,
+        file_type, file_size_kb, page_count, uploader_name, uploader_avatar,
+        downloads_count, views_count, upvotes_count, tags, is_featured,
+        preview_content, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1, ?, 0, ?, 'approved')
+    """, (
+        data.get("title", "").strip(),
+        data.get("description", "").strip(),
+        data.get("subject_name", "").strip(),
+        data.get("subject_code", "").strip().upper(),
+        data.get("branch", "Computer Science & Engineering"),
+        data.get("semester", "Semester 1"),
+        data.get("university", "General University"),
+        data.get("material_type", "Lecture Notes"),
+        data.get("academic_year", str(datetime.now().year)),
+        data.get("file_url", "https://raw.githubusercontent.com/mathiasbynens/small/master/pdf.pdf"),
+        data.get("file_type", "PDF"),
+        data.get("file_size_kb", 2500),
+        data.get("page_count", 20),
+        data.get("uploader_name", "Student Contributor"),
+        data.get("uploader_avatar", "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"),
+        data.get("tags", ""),
+        data.get("preview_content", data.get("description", "Student shared notes document."))
+    ))
+
+    material_id = cursor.lastrowid
+
+    # Update or insert contributor
+    uploader_name = data.get("uploader_name", "Student Contributor").strip()
+    cursor.execute("SELECT id, uploads_count, reputation FROM contributors WHERE name = ?", (uploader_name,))
+    contributor = cursor.fetchone()
+    if contributor:
+        cursor.execute("""
+        UPDATE contributors 
+        SET uploads_count = uploads_count + 1, reputation = reputation + 150
+        WHERE id = ?
+        """, (contributor["id"],))
+    else:
+        cursor.execute("""
+        INSERT INTO contributors (name, avatar, university, uploads_count, upvotes_count, badge, reputation)
+        VALUES (?, ?, ?, 1, 1, 'Rising Contributor', 150)
+        """, (
+            uploader_name,
+            data.get("uploader_avatar", "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"),
+            data.get("university", "General University")
+        ))
+
+    conn.commit()
+    conn.close()
+    return material_id
+
+
+def create_review(material_id, author_name, rating, comment):
+    """Add a review for a material."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO reviews (material_id, author_name, rating, comment)
+    VALUES (?, ?, ?, ?)
+    """, (material_id, author_name.strip(), rating, comment.strip()))
+    review_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return review_id
+
+
+def get_stats():
+    """Return dashboard analytics and platform stats."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT 
+        COUNT(id) AS total_materials,
+        COALESCE(SUM(downloads_count), 0) AS total_downloads,
+        COALESCE(SUM(views_count), 0) AS total_views,
+        COALESCE(SUM(upvotes_count), 0) AS total_upvotes,
+        COUNT(DISTINCT university) AS total_universities,
+        COUNT(DISTINCT branch) AS total_branches
+    FROM materials
+    WHERE status = 'approved'
+    """)
+    stats = dict(cursor.fetchone())
+
+    cursor.execute("SELECT COUNT(*) AS total_reviews FROM reviews")
+    stats["total_reviews"] = cursor.fetchone()["total_reviews"]
+
+    conn.close()
+    return stats
+
+
+def get_leaderboard(limit=6):
+    """Return top student contributors ranked by reputation."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT name, avatar, university, uploads_count, upvotes_count, badge, reputation
+    FROM contributors
+    ORDER BY reputation DESC, upvotes_count DESC
+    LIMIT ?
+    """, (limit,))
+    results = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return results
+
+
+def get_filter_options():
+    """Retrieve distinct universities, branches, semesters, and material types."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT DISTINCT university FROM materials WHERE status = 'approved' ORDER BY university ASC")
+    universities = [r["university"] for r in cursor.fetchall()]
+
+    cursor.execute("SELECT DISTINCT branch FROM materials WHERE status = 'approved' ORDER BY branch ASC")
+    branches = [r["branch"] for r in cursor.fetchall()]
+
+    cursor.execute("SELECT DISTINCT semester FROM materials WHERE status = 'approved' ORDER BY semester ASC")
+    semesters = [r["semester"] for r in cursor.fetchall()]
+
+    cursor.execute("SELECT DISTINCT material_type FROM materials WHERE status = 'approved' ORDER BY material_type ASC")
+    material_types = [r["material_type"] for r in cursor.fetchall()]
+
+    conn.close()
+    return {
+        "universities": universities,
+        "branches": branches,
+        "semesters": semesters,
+        "material_types": material_types
+    }
