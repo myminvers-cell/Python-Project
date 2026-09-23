@@ -32,10 +32,101 @@
             }
         }
     </script>
-    <link rel="stylesheet" href="/static/css/custom.css">
-
+    
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Fallback External Link + Inlined CSS to guarantee 100% styling on Vercel -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        :root {
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        body {
+            font-family: var(--font-sans);
+            letter-spacing: -0.01em;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-nav {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .bg-mesh-gradient {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.08) 0px, transparent 50%);
+        }
+        .dark .bg-mesh-gradient {
+            background-color: #0b0f19;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.22) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.22) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.15) 0px, transparent 50%);
+        }
+        .card-hover-glow {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-hover-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 32px -8px rgba(99, 102, 241, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+        }
+        .dark .card-hover-glow:hover {
+            box-shadow: 0 16px 32px -8px rgba(99, 102, 241, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .badge-lecture-notes { background-color: #e0e7ff; color: #4338ca; }
+        .dark .badge-lecture-notes { background-color: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+        .badge-pyqs { background-color: #fee2e2; color: #b91c1c; }
+        .dark .badge-pyqs { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-formula-sheets { background-color: #fef3c7; color: #b45309; }
+        .dark .badge-formula-sheets { background-color: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .badge-lab-manuals { background-color: #d1fae5; color: #047857; }
+        .dark .badge-lab-manuals { background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .badge-solved-papers { background-color: #f3e8ff; color: #7e22ce; }
+        .dark .badge-solved-papers { background-color: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .badge-syllabus { background-color: #e0f2fe; color: #0369a1; }
+        .dark .badge-syllabus { background-color: rgba(14, 165, 233, 0.2); color: #7dd3fc; }
+
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.35); }
+            100% { transform: scale(1); }
+        }
+        .animate-heart-pop { animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        pre code { font-family: var(--font-mono); }
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-enter { animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
 </head>
 <body class="bg-mesh-gradient text-slate-800 dark:text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
@@ -217,15 +308,15 @@
 
             <!-- Material Items Counter -->
             <div class="flex items-center justify-between px-1">
-                <span id="materialsCount" class="text-xs font-bold uppercase tracking-wider text-slate-400">Loading resources...</span>
+                <span id="materialsCount" class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ initial_total }} materials found</span>
                 <button id="heroUploadBtn" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
                     <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                     Upload Your Notes
                 </button>
             </div>
 
-            <!-- Loading Skeleton -->
-            <div id="loadingSkeleton" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Loading Skeleton (Hidden by default to prevent blank state) -->
+            <div id="loadingSkeleton" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {% for i in range(6) %}
                 <div class="glass-panel rounded-2xl p-5 space-y-4 animate-pulse">
                     <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
@@ -237,9 +328,84 @@
                 {% endfor %}
             </div>
 
-            <!-- Materials Grid -->
-            <div id="materialsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <!-- Dynamically populated by static/js/app.js -->
+            <!-- Pre-rendered Materials Grid (Instant Display on First Load) -->
+            <div id="materialsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {% for item in initial_materials %}
+                <div class="glass-panel rounded-2xl p-5 flex flex-col justify-between card-hover-glow transition-all duration-300 relative group">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold 
+                                {% if item.material_type == 'Lecture Notes' %}badge-lecture-notes
+                                {% elif item.material_type == 'Previous Year Questions (PYQs)' %}badge-pyqs
+                                {% elif item.material_type == 'Formula Sheets / Cheat Sheets' %}badge-formula-sheets
+                                {% elif item.material_type == 'Lab Manuals' %}badge-lab-manuals
+                                {% elif item.material_type == 'Solved Papers' %}badge-solved-papers
+                                {% else %}badge-syllabus{% endif %}">
+                                {{ item.material_type }}
+                            </span>
+                            <button class="bookmark-btn p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                                    data-id="{{ item.id }}" title="Save to Exam Kit">
+                                <i data-lucide="bookmark" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-1.5 mb-2 text-xs text-slate-500 dark:text-slate-400">
+                            <span class="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 font-medium">
+                                {{ item.subject_code or 'COURSE' }}
+                            </span>
+                            <span>•</span>
+                            <span class="font-medium text-slate-600 dark:text-slate-300">{{ item.semester }}</span>
+                            <span>•</span>
+                            <span>{{ item.academic_year or '2024' }}</span>
+                        </div>
+
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base leading-snug mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2 cursor-pointer preview-trigger" data-id="{{ item.id }}">
+                            {{ item.title }}
+                        </h3>
+
+                        <div class="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-3">
+                            <i data-lucide="building-2" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span class="truncate">{{ item.university }}</span>
+                        </div>
+
+                        <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 mb-4 leading-relaxed">
+                            {{ item.description or 'Comprehensive study resource and revision reference.' }}
+                        </p>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-3">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                                <span class="font-bold text-slate-700 dark:text-slate-200">{{ item.avg_rating or '5.0' }}</span>
+                                <span>({{ item.review_count or 0 }})</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="flex items-center gap-1" title="Downloads">
+                                    <i data-lucide="download" class="w-3.5 h-3.5 text-slate-400"></i>
+                                    {{ item.downloads_count }}
+                                </span>
+                                <span>•</span>
+                                <span>{{ item.page_count or 24 }} pgs</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-5 gap-2">
+                            <button class="upvote-btn col-span-2 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-rose-400 dark:hover:border-rose-500 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-all bg-white/50 dark:bg-slate-800/50"
+                                    data-id="{{ item.id }}">
+                                <i data-lucide="heart" class="w-3.5 h-3.5"></i>
+                                <span class="upvote-count">{{ item.upvotes_count }}</span>
+                            </button>
+
+                            <button class="preview-btn col-span-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm shadow-indigo-600/20 active:scale-95"
+                                    data-id="{{ item.id }}">
+                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                <span>Preview</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
             <!-- Empty State -->
@@ -257,7 +423,7 @@
             </div>
 
             <!-- Pagination Container -->
-            <div id="paginationContainer" class="hidden flex items-center justify-center gap-3 pt-6">
+            <div id="paginationContainer" class="flex items-center justify-center gap-3 pt-6">
                 <button id="prevPageBtn" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-800/70 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     Previous
                 </button>
@@ -334,7 +500,6 @@
     <div id="previewModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
         <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
             
-            <!-- Modal Header -->
             <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-4 bg-slate-50/70 dark:bg-slate-800/40">
                 <div>
                     <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -361,10 +526,7 @@
                 </button>
             </div>
 
-            <!-- Modal Body (Scrollable) -->
             <div class="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1">
-                
-                <!-- Metadata Stats Pills -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">
                         <span class="block text-[11px] text-slate-400 uppercase font-semibold">Pages</span>
@@ -384,14 +546,12 @@
                     </div>
                 </div>
 
-                <!-- Description & Tags -->
                 <div>
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Overview</h4>
                     <p id="previewDescription" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"></p>
                     <div id="previewTags" class="flex flex-wrap gap-1.5 mt-3"></div>
                 </div>
 
-                <!-- In-App Interactive Document Reader Preview -->
                 <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-slate-900 text-slate-100">
                     <div class="p-3 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between text-xs">
                         <span class="flex items-center gap-1.5 font-semibold text-slate-300">
@@ -400,19 +560,15 @@
                         </span>
                         <span class="text-slate-400 font-mono text-[11px]">Instant Document Preview</span>
                     </div>
-                    <div class="p-4 sm:p-5 max-h-72 overflow-y-auto font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed select-text" id="previewContent">
-                        <!-- Preview content populated dynamically -->
-                    </div>
+                    <div class="p-4 sm:p-5 max-h-72 overflow-y-auto font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed select-text" id="previewContent"></div>
                 </div>
 
-                <!-- Community Reviews Section -->
                 <div class="border-t border-slate-200 dark:border-slate-800 pt-6 space-y-4">
                     <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <i data-lucide="message-square" class="w-4 h-4 text-indigo-500"></i>
                         Student Reviews & Feedback
                     </h3>
 
-                    <!-- Review Submission Form -->
                     <form id="reviewForm" class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Rate this study material:</span>
@@ -437,15 +593,11 @@
                         </button>
                     </form>
 
-                    <!-- Reviews List -->
-                    <div id="reviewsList" class="space-y-3">
-                        <!-- Populated dynamically -->
-                    </div>
+                    <div id="reviewsList" class="space-y-3"></div>
                 </div>
 
             </div>
 
-            <!-- Modal Footer Action Buttons -->
             <div class="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex flex-wrap items-center justify-between gap-3">
                 <button id="previewBookmarkBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors">
                     <i data-lucide="bookmark" class="w-4 h-4"></i>
@@ -467,7 +619,6 @@
     <div id="uploadModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
         <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]">
             
-            <!-- Upload Modal Header -->
             <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
@@ -484,17 +635,13 @@
                 </button>
             </div>
 
-            <!-- Upload Form -->
             <form id="uploadForm" class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
-                
-                <!-- Material Title -->
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Material Title *</label>
                     <input type="text" name="title" required placeholder="e.g. Complete Operating Systems End-Sem Master Notes"
                            class="w-full text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
 
-                <!-- Subject & Code -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Subject Name *</label>
@@ -508,7 +655,6 @@
                     </div>
                 </div>
 
-                <!-- University & Branch -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">University / College</label>
@@ -528,7 +674,6 @@
                     </div>
                 </div>
 
-                <!-- Semester & Material Type -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Semester</label>
@@ -551,7 +696,6 @@
                     </div>
                 </div>
 
-                <!-- File Drag & Drop Zone -->
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Upload File or Provide Cloud URL</label>
                     <div id="fileDropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors bg-slate-50/50 dark:bg-slate-800/30">
@@ -563,14 +707,12 @@
                     </div>
                 </div>
 
-                <!-- External Cloud Link Option -->
                 <div>
                     <label class="block text-[11px] font-medium text-slate-400 mb-1">Or direct file link (Google Drive / OneDrive / GitHub / Dropbox):</label>
                     <input type="url" name="file_url" placeholder="https://drive.google.com/..."
                            class="w-full text-xs py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
 
-                <!-- Uploader Handle & Tags -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Your Name / Contributor Handle</label>
@@ -584,14 +726,12 @@
                     </div>
                 </div>
 
-                <!-- Description / Preview snippet -->
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Brief Summary / Key Topics Covered</label>
                     <textarea name="description" rows="3" placeholder="Highlight key modules, units, solved numericals, or exam tips included in this file..."
                               class="w-full text-xs sm:text-sm py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
 
-                <!-- Modal Actions -->
                 <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
                     <button type="button" onclick="document.getElementById('closeUploadBtn').click();" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
                         Cancel
@@ -620,7 +760,6 @@
             </button>
         </div>
 
-        <!-- Drawer Content -->
         <div class="p-4 flex-1 overflow-y-auto space-y-3">
             <div id="studyKitEmpty" class="text-center py-16 px-4 space-y-3">
                 <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
@@ -632,12 +771,9 @@
                 </p>
             </div>
 
-            <div id="studyKitItems" class="space-y-2.5">
-                <!-- Dynamically populated -->
-            </div>
+            <div id="studyKitItems" class="space-y-2.5"></div>
         </div>
 
-        <!-- Drawer Footer -->
         <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
             <button id="clearStudyKitBtn" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">
                 Clear All
@@ -651,10 +787,10 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 flex flex-col items-end pointer-events-none"></div>
 
-    <!-- Client-side App Script -->
+    <!-- External Script + Client Controller Script -->
     <script src="/static/js/app.js"></script>
     <script>
-        // Initialize Lucide Icons on load
+        // Initialize Lucide Icons immediately
         if (window.lucide) {
             lucide.createIcons();
         }

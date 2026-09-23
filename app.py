@@ -50,7 +50,21 @@ def index():
     stats = database.get_stats()
     filters = database.get_filter_options()
     leaderboard = database.get_leaderboard(limit=5)
-    return render_template("index.html", stats=stats, filters=filters, leaderboard=leaderboard)
+    materials_data = database.get_materials(page=1, per_page=12)
+    return render_template(
+        "index.html",
+        stats=stats,
+        filters=filters,
+        leaderboard=leaderboard,
+        initial_materials=materials_data.get("materials", []),
+        initial_total=materials_data.get("total", 0)
+    )
+
+
+@app.route("/static/<path:filename>", endpoint="serve_static_asset")
+def serve_static_asset(filename):
+    """Explicit static file handler ensuring reliable asset delivery on Vercel."""
+    return send_from_directory(app.static_folder, filename)
 
 
 # -------------------------------------------------------------
