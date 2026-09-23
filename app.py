@@ -6,9 +6,12 @@ Full-Stack Flask Application ready for Vercel Serverless and Local Execution.
 import os
 import json
 from datetime import datetime, timezone
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, send_file
 from werkzeug.utils import secure_filename
+from io import BytesIO
 import database
+from pdf_generator import generate_notes_pdf
+
 
 # Initialize Flask app
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -144,6 +147,7 @@ def upload_material():
     file_url = data.get("file_url", "").strip()
     file_type = "PDF"
     file_size_kb = 2048
+    file_data = None
 
     if "file" in request.files:
         file = request.files["file"]
@@ -161,8 +165,8 @@ def upload_material():
                 except Exception:
                     file_url = "https://raw.githubusercontent.com/mathiasbynens/small/master/pdf.pdf"
             else:
-                # In serverless environment, fallback to standard link or demo URL
-                file_url = "https://raw.githubusercontent.com/mathiasbynens/small/master/pdf.pdf"
+                file_data = file.read()
+                file_url = ""
 
             ext = filename.rsplit(".", 1)[1].upper()
             file_type = ext if ext in ["PDF", "DOCX", "PPTX", "ZIP"] else "PDF"
@@ -197,12 +201,55 @@ def upload_material():
         "preview_content": data.get("preview_content", data.get("description", "Preview not available."))
     }
 
-    material_id = database.create_material(payload)
+    material_id = database.create_material(payload, file_data=file_data)
     return jsonify({
         "success": True,
         "message": "Material uploaded and published successfully!",
         "material_id": material_id
     }), 201
+
+
+@app.route("/api/materials/<int:material_id>/file", methods=["GET"])
+def download_material_file(material_id):
+    item = database.get_material_by_id(material_id)
+
+    if not item:
+        return jsonify({"error": "Material not found"}), 404
+
+    file_data, stored_type = database.get_material_file_data(material_id)
+
+    if file_data:
+        mime_types = {
+            "PDF": "application/pdf",
+            "DOCX": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "PPTX": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "ZIP": "application/zip"
+        }
+
+        ext = (item.get("file_type") or stored_type or "PDF").upper()
+        mime = mime_types.get(ext, "application/octet-stream")
+        filename = secure_filename(
+            item.get("title") or "univault-material"
+        ) + "." + ext.lower()
+
+        return send_file(
+            BytesIO(file_data),
+            mimetype=mime,
+            as_attachment=True,
+            download_name=filename
+        )
+
+    pdf_bytes = generate_notes_pdf(item)
+    filename = secure_filename(
+        item.get("title") or "univault-material"
+    ) + ".pdf"
+
+    return send_file(
+        BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 @app.route("/api/materials/<int:material_id>/upvote", methods=["POST"])

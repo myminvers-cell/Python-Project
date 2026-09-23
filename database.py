@@ -74,9 +74,17 @@ def init_db():
         is_featured INTEGER DEFAULT 0,
         preview_content TEXT DEFAULT '',
         status TEXT DEFAULT 'approved',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        file_data BLOB DEFAULT NULL
     );
     """)
+
+    # Migration: add file_data column to existing DBs that don't have it yet
+    try:
+        cursor.execute("ALTER TABLE materials ADD COLUMN file_data BLOB DEFAULT NULL")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists
 
     # Create reviews table
     cursor.execute("""
@@ -105,46 +113,8 @@ def init_db():
     );
     """)
 
-    # Check if materials exist, if not seed initial data
-    cursor.execute("SELECT COUNT(*) AS count FROM materials")
-    row = cursor.fetchone()
-    if row and row["count"] == 0:
-        # Seed materials
-        for item in SAMPLE_MATERIALS:
-            cursor.execute("""
-            INSERT INTO materials (
-                title, description, subject_name, subject_code, branch,
-                semester, university, material_type, academic_year, file_url,
-                file_type, file_size_kb, page_count, uploader_name, uploader_avatar,
-                downloads_count, views_count, upvotes_count, tags, is_featured,
-                preview_content, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')
-            """, (
-                item["title"], item.get("description", ""), item["subject_name"],
-                item.get("subject_code", ""), item["branch"], item["semester"],
-                item["university"], item["material_type"], item.get("academic_year", "2024"),
-                item["file_url"], item.get("file_type", "PDF"), item.get("file_size_kb", 2048),
-                item.get("page_count", 25), item.get("uploader_name", "Student Scholar"),
-                item.get("uploader_avatar", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"),
-                item.get("downloads_count", 0), item.get("views_count", 0),
-                item.get("upvotes_count", 0), item.get("tags", ""), item.get("is_featured", 0),
-                item.get("preview_content", "")
-            ))
-
-        # Seed reviews
-        for rev in SAMPLE_REVIEWS:
-            cursor.execute("""
-            INSERT INTO reviews (material_id, author_name, rating, comment)
-            VALUES (?, ?, ?, ?)
-            """, (rev["material_id"], rev["author_name"], rev["rating"], rev["comment"]))
-
-        # Seed contributors
-        for c in SAMPLE_CONTRIBUTORS:
-            cursor.execute("""
-            INSERT INTO contributors (name, avatar, university, uploads_count, upvotes_count, badge, reputation)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (c["name"], c["avatar"], c["university"], c["uploads_count"], c["upvotes_count"], c["badge"], c["reputation"]))
-
+    # No default/sample materials, reviews, or contributors.
+    # All content is created through user activity.
     conn.commit()
     conn.close()
 
@@ -219,6 +189,13 @@ def get_materials(search="", branch="all", semester="all", university="all", mat
     for row in paged_items:
         d = dict(row)
         d["avg_rating"] = round(d["avg_rating"], 1) if d["avg_rating"] is not None else 5.0
+
+        if (
+            not d.get("file_url")
+            or "mathiasbynens/small/master/pdf.pdf" in d.get("file_url", "")
+        ):
+            d["file_url"] = f"/api/materials/{d['id']}/file"
+
         results.append(d)
 
     conn.close()
@@ -253,6 +230,12 @@ def get_material_by_id(material_id):
 
     item = dict(row)
     item["avg_rating"] = round(item["avg_rating"], 1) if item["avg_rating"] is not None else 5.0
+
+    if (
+        not item.get("file_url")
+        or "mathiasbynens/small/master/pdf.pdf" in item.get("file_url", "")
+    ):
+        item["file_url"] = f"/api/materials/{item['id']}/file"
 
     # Fetch reviews
     cursor.execute("""
@@ -303,8 +286,13 @@ def increment_download(material_id):
     return result
 
 
-def create_material(data):
-    """Insert a new user-contributed academic material."""
+def create_material(data, file_data=None):
+    """Insert a new user-contributed academic material.
+    
+    Args:
+        data: dict with material metadata fields
+        file_data: optional bytes of the uploaded file to store in DB (for serverless)
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -314,8 +302,8 @@ def create_material(data):
         semester, university, material_type, academic_year, file_url,
         file_type, file_size_kb, page_count, uploader_name, uploader_avatar,
         downloads_count, views_count, upvotes_count, tags, is_featured,
-        preview_content, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1, ?, 0, ?, 'approved')
+        preview_content, status, file_data
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1, ?, 0, ?, 'approved', ?)
     """, (
         data.get("title", "").strip(),
         data.get("description", "").strip(),
@@ -326,17 +314,25 @@ def create_material(data):
         data.get("university", "General University"),
         data.get("material_type", "Lecture Notes"),
         data.get("academic_year", str(datetime.now().year)),
-        data.get("file_url", "https://raw.githubusercontent.com/mathiasbynens/small/master/pdf.pdf"),
+        data.get("file_url", ""),   # will be updated below with the real route
         data.get("file_type", "PDF"),
         data.get("file_size_kb", 2500),
         data.get("page_count", 20),
         data.get("uploader_name", "Student Contributor"),
         data.get("uploader_avatar", "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"),
         data.get("tags", ""),
-        data.get("preview_content", data.get("description", "Student shared notes document."))
+        data.get("preview_content", data.get("description", "Student shared notes document.")),
+        file_data   # None for seeded materials (PDF generated on-the-fly), bytes for uploads
     ))
 
     material_id = cursor.lastrowid
+
+    # If no explicit file_url was provided, set the dynamic generation route
+    if not data.get("file_url", "").strip():
+        cursor.execute(
+            "UPDATE materials SET file_url = ? WHERE id = ?",
+            (f"/api/materials/{material_id}/file", material_id)
+        )
 
     # Update or insert contributor
     uploader_name = data.get("uploader_name", "Student Contributor").strip()
@@ -361,6 +357,20 @@ def create_material(data):
     conn.commit()
     conn.close()
     return material_id
+
+
+def get_material_file_data(material_id):
+    """Return the raw file bytes stored in DB for a user-uploaded material, or None."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT file_data, file_type FROM materials WHERE id = ?", (material_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row and row["file_data"]:
+        return bytes(row["file_data"]), row["file_type"]
+    return None, None
+
+
 
 
 def create_review(material_id, author_name, rating, comment):
