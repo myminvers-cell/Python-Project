@@ -9,9 +9,13 @@ from datetime import datetime, timezone
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, send_file
 from werkzeug.utils import secure_filename
 from io import BytesIO
+import io
 import database
 from pdf_generator import generate_notes_pdf
-
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
 
 # Initialize Flask app
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -135,9 +139,10 @@ def upload_material():
     """
     Upload and publish a new study note or exam paper.
     Supports JSON or Multipart Form data.
+    Automatically detects real file size and PDF page count.
     """
     data = {}
-    
+
     if request.is_json:
         data = request.get_json() or {}
     else:
@@ -146,67 +151,191 @@ def upload_material():
     # Handle file upload if present
     file_url = data.get("file_url", "").strip()
     file_type = "PDF"
-    file_size_kb = 2048
+    file_size_kb = 0
+    page_count = 0
     file_data = None
 
     if "file" in request.files:
         file = request.files["file"]
+
         if file and file.filename and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            unique_filename = f"{int(datetime.now(timezone.utc).timestamp())}_{filename}"
-            
-            # If writable local filesystem
-            if not os.environ.get("VERCEL"):
-                save_path = os.path.join(UPLOAD_FOLDER, unique_filename)
-                try:
-                    file.save(save_path)
-                    file_url = f"/static/uploads/{unique_filename}"
-                    file_size_kb = max(1, os.path.getsize(save_path) // 1024)
-                except Exception:
-                    file_url = "https://raw.githubusercontent.com/mathiasbynens/small/master/pdf.pdf"
-            else:
-                file_data = file.read()
-                file_url = ""
+            unique_filename = (
+                f"{int(datetime.now(timezone.utc).timestamp())}_{filename}"
+            )
 
             ext = filename.rsplit(".", 1)[1].upper()
-            file_type = ext if ext in ["PDF", "DOCX", "PPTX", "ZIP"] else "PDF"
+            file_type = ext if ext in [
+                "PDF", "DOCX", "PPTX", "ZIP", "TXT",
+                "PNG", "JPG", "JPEG"
+            ] else "PDF"
 
-    # Default fallback file URL if user didn't supply one
-    if not file_url:
-        file_url = "https://raw.githubusercontent.com/mathiasbynens/small/master/pdf.pdf"
+            # ---------------------------------------------------------
+            # LOCAL STORAGE
+            # ---------------------------------------------------------
+            if not os.environ.get("VERCEL"):
+                save_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+
+                try:
+                    file.save(save_path)
+
+                    file_url = f"/static/uploads/{unique_filename}"
+
+                    # Real file size
+                    actual_size_bytes = os.path.getsize(save_path)
+                    file_size_kb = max(
+                        1,
+                        (actual_size_bytes + 1023) // 1024
+                    )
+
+                    # Real PDF page count
+                    if file_type == "PDF" and PdfReader is not None:
+                        try:
+                            reader = PdfReader(save_path)
+                            page_count = len(reader.pages)
+                        except Exception as pdf_error:
+                            print(
+                                f"PDF page count warning: {pdf_error}"
+                            )
+                            page_count = 0
+
+                except Exception as e:
+                    print(f"Local file save error: {e}")
+                    file_url = (
+                        "https://raw.githubusercontent.com/"
+                        "mathiasbynens/small/master/pdf.pdf"
+                    )
+
+            # ---------------------------------------------------------
+            # VERCEL STORAGE
+            # ---------------------------------------------------------
+            else:
+                # Read the ORIGINAL uploaded bytes into memory.
+                file_data = file.read()
+
+                # Real file size from uploaded bytes
+                actual_size_bytes = len(file_data)
+
+                file_size_kb = max(
+                    1,
+                    (actual_size_bytes + 1023) // 1024
+                )
+
+                # Real PDF page count from uploaded bytes
+                if file_type == "PDF" and PdfReader is not None:
+                    try:
+                        reader = PdfReader(io.BytesIO(file_data))
+                        page_count = len(reader.pages)
+                    except Exception as pdf_error:
+                        print(
+                            f"PDF page count warning: {pdf_error}"
+                        )
+                        page_count = 0
+
+                # IMPORTANT:
+                # Keep this empty on Vercel so database.py can point
+                # the material to /api/materials/<id>/file.
+                file_url = ""
+
+    # Default fallback only when there is no uploaded file
+    if not file_url and file_data is None:
+        file_url = (
+            "https://raw.githubusercontent.com/"
+            "mathiasbynens/small/master/pdf.pdf"
+        )
 
     title = data.get("title", "").strip()
     subject_name = data.get("subject_name", "").strip()
 
     if not title or not subject_name:
-        return jsonify({"error": "Title and Subject Name are required fields"}), 400
+        return jsonify({
+            "error": "Title and Subject Name are required fields"
+        }), 400
+
+    # ---------------------------------------------------------
+    # Allow manually supplied metadata only when real metadata
+    # could not be detected.
+    # ---------------------------------------------------------
+    if file_size_kb <= 0:
+        try:
+            file_size_kb = max(
+                1,
+                int(data.get("file_size_kb", 1))
+            )
+        except (ValueError, TypeError):
+            file_size_kb = 1
+
+    if page_count <= 0:
+        try:
+            page_count = max(
+                0,
+                int(data.get("page_count", 0))
+            )
+        except (ValueError, TypeError):
+            page_count = 0
 
     payload = {
         "title": title,
-        "description": data.get("description", "Student shared notes and study material."),
+        "description": data.get(
+            "description",
+            "Student shared notes and study material."
+        ),
         "subject_name": subject_name,
         "subject_code": data.get("subject_code", "GEN-101"),
-        "branch": data.get("branch", "Computer Science & Engineering"),
-        "semester": data.get("semester", "Semester 1"),
-        "university": data.get("university", "General University"),
-        "material_type": data.get("material_type", "Lecture Notes"),
-        "academic_year": data.get("academic_year", str(datetime.now().year)),
+        "branch": data.get(
+            "branch",
+            "Computer Science & Engineering"
+        ),
+        "semester": data.get(
+            "semester",
+            "Semester 1"
+        ),
+        "university": data.get(
+            "university",
+            "General University"
+        ),
+        "material_type": data.get(
+            "material_type",
+            "Lecture Notes"
+        ),
+        "academic_year": data.get(
+            "academic_year",
+            str(datetime.now().year)
+        ),
         "file_url": file_url,
         "file_type": file_type,
-        "file_size_kb": int(data.get("file_size_kb", file_size_kb)),
-        "page_count": int(data.get("page_count", 24)),
-        "uploader_name": data.get("uploader_name", "Anonymous Scholar").strip() or "Anonymous Scholar",
-        "uploader_avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+        "file_size_kb": file_size_kb,
+        "page_count": page_count,
+        "uploader_name": data.get(
+            "uploader_name",
+            "Anonymous Scholar"
+        ).strip() or "Anonymous Scholar",
+        "uploader_avatar": (
+            "https://images.unsplash.com/"
+            "photo-1535713875002-d1d0cf377fde"
+            "?w=100&auto=format&fit=crop&q=80"
+        ),
         "tags": data.get("tags", ""),
-        "preview_content": data.get("preview_content", data.get("description", "Preview not available."))
+        "preview_content": data.get(
+            "preview_content",
+            data.get("description", "Preview not available.")
+        )
     }
 
-    material_id = database.create_material(payload, file_data=file_data)
+    material_id = database.create_material(
+        payload,
+        file_data=file_data
+    )
+
     return jsonify({
         "success": True,
         "message": "Material uploaded and published successfully!",
-        "material_id": material_id
+        "material_id": material_id,
+        "file_size_kb": file_size_kb,
+        "page_count": page_count
     }), 201
+
+
 
 
 @app.route("/api/materials/<int:material_id>/file", methods=["GET"])
