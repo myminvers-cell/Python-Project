@@ -188,7 +188,7 @@ def get_materials(search="", branch="all", semester="all", university="all", mat
     results = []
     for row in paged_items:
         d = dict(row)
-	d.pop("file_data", None)
+        d.pop("file_data", None)
         d["avg_rating"] = round(d["avg_rating"], 1) if d["avg_rating"] is not None else 5.0
 
         if (
