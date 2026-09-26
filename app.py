@@ -260,12 +260,16 @@ def upvote_material(material_id):
 
 @app.route("/api/materials/<int:material_id>/download", methods=["POST"])
 def track_download(material_id):
-    """Track and increment download count."""
+    """Track download and return the real file endpoint."""
     result = database.increment_download(material_id)
+
     return jsonify({
         "success": True,
         "downloads_count": result["downloads_count"],
-        "file_url": result["file_url"]
+        "file_url": url_for(
+            "download_material_file",
+            material_id=material_id
+        )
     })
 
 
@@ -310,6 +314,24 @@ def get_filters():
     filters = database.get_filter_options()
     return jsonify(filters)
 
+@app.route("/api/materials/<int:material_id>/file-debug", methods=["GET"])
+def debug_material_file(material_id):
+    file_data, stored_type = database.get_material_file_data(material_id)
+
+    if not file_data:
+        return jsonify({
+            "material_id": material_id,
+            "has_file": False,
+            "message": "No BLOB found in the current Vercel database instance"
+        }), 404
+
+    return jsonify({
+        "material_id": material_id,
+        "has_file": True,
+        "file_type": stored_type,
+        "file_size_bytes": len(file_data),
+        "file_size_kb": round(len(file_data) / 1024, 2)
+    })
 
 # -------------------------------------------------------------
 # Local Dev Entry Point

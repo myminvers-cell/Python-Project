@@ -858,32 +858,37 @@
     // -------------------------------------------------------------
     // Download Action Handler
     // -------------------------------------------------------------
-    async function handleDownload(id, directUrl) {
-        showToast("Initiating secure material download...", "info");
+   async function handleDownload(id, directUrl) {
+    showToast("Preparing your material download...", "info");
 
-        try {
-            const res = await fetch(`/api/materials/${id}/download`, { method: "POST" });
-            const data = await res.json();
+    try {
+        // First record the download
+        const trackRes = await fetch(`/api/materials/${id}/download`, {
+            method: "POST"
+        });
 
-            const targetUrl = data.file_url || directUrl || "https://raw.githubusercontent.com/mathiasbynens/small/master/pdf.pdf";
-            
-            // Trigger browser download or new tab opening
-            const a = document.createElement("a");
-            a.href = targetUrl;
-            a.target = "_blank";
-            a.download = `UniVault_Material_${id}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            // Update card download count if visible
-            fetchMaterials();
-        } catch (error) {
-            console.error("Download tracking failed:", error);
-            window.open(directUrl, "_blank");
+        if (!trackRes.ok) {
+            throw new Error("Failed to track download");
         }
-    }
 
+        // IMPORTANT:
+        // Download the ORIGINAL uploaded file from the backend.
+        const fileUrl = `/api/materials/${id}/file`;
+
+        const a = document.createElement("a");
+        a.href = fileUrl;
+        a.download = `UniVault_Material_${id}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        fetchMaterials();
+
+    } catch (error) {
+        console.error("Download failed:", error);
+        showToast("Failed to download the original file.", "error");
+    }
+}
     // -------------------------------------------------------------
     // Upload & Contribution Modal
     // -------------------------------------------------------------
