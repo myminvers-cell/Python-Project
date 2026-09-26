@@ -211,6 +211,7 @@ def upload_material():
 
 @app.route("/api/materials/<int:material_id>/file", methods=["GET"])
 def download_material_file(material_id):
+    """Download the original uploaded material file."""
     item = database.get_material_by_id(material_id)
 
     if not item:
@@ -218,39 +219,37 @@ def download_material_file(material_id):
 
     file_data, stored_type = database.get_material_file_data(material_id)
 
-    if file_data:
-        mime_types = {
-            "PDF": "application/pdf",
-            "DOCX": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "PPTX": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "ZIP": "application/zip"
-        }
+    # Do NOT generate a replacement PDF.
+    # The user must receive the original uploaded file.
+    if not file_data:
+        return jsonify({
+            "error": "Original uploaded file is not available on the server."
+        }), 404
 
-        ext = (item.get("file_type") or stored_type or "PDF").upper()
-        mime = mime_types.get(ext, "application/octet-stream")
-        filename = secure_filename(
-            item.get("title") or "univault-material"
-        ) + "." + ext.lower()
+    mime_types = {
+        "PDF": "application/pdf",
+        "DOCX": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "PPTX": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "ZIP": "application/zip",
+        "TXT": "text/plain",
+        "PNG": "image/png",
+        "JPG": "image/jpeg",
+        "JPEG": "image/jpeg"
+    }
 
-        return send_file(
-            BytesIO(file_data),
-            mimetype=mime,
-            as_attachment=True,
-            download_name=filename
-        )
+    ext = (item.get("file_type") or stored_type or "PDF").upper()
+    mime = mime_types.get(ext, "application/octet-stream")
 
-    pdf_bytes = generate_notes_pdf(item)
     filename = secure_filename(
         item.get("title") or "univault-material"
-    ) + ".pdf"
+    ) + "." + ext.lower()
 
     return send_file(
-        BytesIO(pdf_bytes),
-        mimetype="application/pdf",
+        BytesIO(bytes(file_data)),
+        mimetype=mime,
         as_attachment=True,
         download_name=filename
     )
-
 
 @app.route("/api/materials/<int:material_id>/upvote", methods=["POST"])
 def upvote_material(material_id):
